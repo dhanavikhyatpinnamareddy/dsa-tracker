@@ -1,9 +1,0 @@
-flask==3.0.2
-flask-cors==4.0.0
-bcrypt==4.1.2
-python-dotenv==1.0.1
-twilio==9.0.4
-psycopg2-binary==2.9.9
-gunicorn==21.2.0
-
-
