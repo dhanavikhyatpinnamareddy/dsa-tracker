@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSA Progress Tracker - Dev Dashboard</title>
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Full Screen Authentication Backdrop -->
+    <div class="auth-backdrop show" id="authBackdrop">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="brand-icon" style="margin: 0 auto 16px auto;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+                </div>
+                <h2>DSA Tracker Login</h2>
+                <p id="authSubtitle">Log in to track algorithms and sync progress.</p>
+            </div>
+            <form id="formAuth">
+                <div class="form-group">
+                    <label for="authUsername">Username</label>
+                    <input type="text" id="authUsername" placeholder="Enter username" required autocomplete="off">
+                </div>
+                <div class="form-group signup-only" style="display: none;">
+                    <label for="authEmail">Email Address <span class="required">*</span></label>
+                    <input type="email" id="authEmail" placeholder="Enter registration email" autocomplete="off">
+                </div>
+
+                <div class="form-group signup-only" style="display: none;">
+                    <div style="display: flex; gap: 8px; align-items: flex-end;">
+                        <div style="flex: 1;">
+                            <label for="authCode" style="margin-bottom: 6px; display: block;">Verification Code <span class="required">*</span></label>
+                            <input type="text" id="authCode" placeholder="Enter 6-digit code" autocomplete="off" maxlength="6" style="height: 38px;">
+                        </div>
+                        <button type="button" class="btn btn-secondary" id="btnSendSignupCode" style="white-space: nowrap; height: 38px; font-size: 0.85rem; padding: 0 16px;">Send Code</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="authPassword">Password</label>
+                    <div class="password-input-wrapper" style="position: relative; width: 100%;">
+                        <input type="password" id="authPassword" placeholder="Enter password" required autocomplete="off" style="width: 100%; padding-right: 40px;">
+                        <button type="button" class="btn-toggle-password" id="btnTogglePassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px;">
+                            <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            <svg class="eye-closed" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                        </button>
+                    </div>
+                    <div class="password-strength-container" id="passwordStrengthWrapper" style="display: none; margin-top: 8px;">
+                        <div class="strength-bar-track" style="height: 5px; background: var(--border-card); border-radius: 3px; overflow: hidden; margin-bottom: 6px;">
+                            <div class="strength-bar-fill" id="passwordStrengthBar" style="width: 0%; height: 100%; transition: width 0.3s ease, background-color 0.3s ease;"></div>
+                        </div>
+                        <div class="strength-label" style="font-size: 0.75rem; color: var(--text-muted); text-align: left;">
+                            Strength: <span id="passwordStrengthText" style="font-weight: 700;">Weak</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="auth-forgot-link-container" id="authForgotLinkContainer" style="text-align: right; margin-top: -8px; margin-bottom: 12px; font-size: 0.8rem;">
+                    <a href="#" id="authForgotLink" style="color: var(--text-muted); text-decoration: none;">Forgot Password?</a>
+                </div>
+                <div class="error-msg" id="authErrorMsg"></div>
+                <button type="submit" class="btn btn-primary" id="btnAuthSubmit" style="width: 100%; margin-top: 12px; height: 42px;">Log In</button>
+            </form>
+            <div class="auth-footer">
+                <span id="authToggleText">Don't have an account?</span>
+                <a href="#" id="authToggleLink">Sign Up</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar/Navigation -->
+        <aside class="app-sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>
+                </div>
+                <h2>DSA Tracker</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#dashboard" class="nav-item active" data-tab="dashboard">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#heatmap" class="nav-item" data-tab="heatmap">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line></svg>
+                    <span>Activity Heatmap</span>
+                </a>
+                <a href="#plans" class="nav-item" data-tab="plans">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                    <span>Custom Plans</span>
+                </a>
+                <a href="#problems" class="nav-item" data-tab="problems">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                    <span>Problems Log</span>
+                </a>
+                <a href="#admin" class="nav-item" data-tab="admin" id="navItemAdmin" style="display: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    <span>Admin Controls</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="theme-toggle-btn" id="themeToggle" aria-label="Toggle Theme" style="width: 100%;">
+                    <span class="icon-light">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                        <span>Light Mode</span>
+                    </span>
+                    <span class="icon-dark">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                        <span>Dark Mode</span>
+                    </span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="app-main">
+            <!-- Header -->
+            <header class="app-header">
+                <div class="header-welcome">
+                    <h1>Welcome Back, <span id="usernameDisplay">Coder</span>!</h1>
+                    <p>Track your algorithms, dominate your coding interviews.</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" id="btnSettings">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                        <span>Target Settings</span>
+                    </button>
+                    <button class="btn btn-primary" id="btnLogProblemHeader">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <span>Log Solved Problem</span>
+                    </button>
+                    <div class="profile-menu-container" id="profileMenuContainer">
+                        <button class="profile-btn" id="btnProfile" aria-label="User Profile">
+                            <span class="user-avatar-initial" id="profileInitial">C</span>
+                        </button>
+                        <div class="profile-dropdown" id="profileDropdown">
+                            <div class="profile-dropdown-header">
+                                <div class="profile-avatar-large" id="profileInitialLarge">C</div>
+                                <div class="profile-user-info">
+                                    <h4 id="profileUsername">Coder</h4>
+                                    <span id="profileRole">Coder Account</span>
+                                </div>
+                            </div>
+                            <div class="profile-dropdown-body">
+                                <div class="profile-info-item" style="margin-bottom: 10px;">
+                                    <span class="label">Daily Target</span>
+                                    <span class="val" id="profileDailyTarget">3 / day</span>
+                                </div>
+                                <hr style="border-top: 1px solid var(--border-card); margin: 6px 0;">
+                                <button type="button" class="btn btn-secondary" id="btnProfileResetPassword" style="width: 100%; border: none; background: transparent; color: var(--text-main); font-size: 0.85rem; height: 32px; justify-content: flex-start; padding: 4px 8px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                    <span>Reset Password</span>
+                                </button>
+                            </div>
+                            <div class="profile-dropdown-footer">
+                                <button class="btn btn-secondary" id="btnLogOut" style="width: 100%; border-color: var(--rose); color: var(--rose); background: transparent; height: 38px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                                    <span>Log Out</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Scrollable Page Wrapper -->
+            <div class="page-content">
+
+                <!-- Section: Dashboard -->
+                <section id="section-dashboard" class="tab-content active">
+                    <!-- Key Stats Grid -->
+                    <div class="stats-grid">
+                        <div class="card stat-card total-solved-card">
+                            <div class="stat-header">
+                                <span class="stat-label">Total Solved</span>
+                                <div class="stat-icon purple-glow">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="statsTotalSolved">0</div>
+                            <div class="stat-meta">Lifetime logged questions</div>
+                        </div>
+
+                        <div class="card stat-card streak-card">
+                            <div class="stat-header">
+                                <span class="stat-label">Active Streak</span>
+                                <div class="stat-icon orange-glow">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+                                </div>
+                            </div>
+                            <div class="stat-value"><span id="statsStreak">0</span><span class="value-unit">days</span></div>
+                            <div class="stat-meta">Max streak: <span id="statsMaxStreak">0</span> days</div>
+                        </div>
+
+                        <div class="card stat-card daily-target-card">
+                            <div class="stat-header">
+                                <span class="stat-label">Daily Goal Target</span>
+                                <div class="stat-icon green-glow">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+                                </div>
+                            </div>
+                            <div class="daily-progress-container">
+                                <div class="circular-progress-wrapper">
+                                    <svg class="circular-progress-svg" viewBox="0 0 36 36">
+                                        <path class="circular-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                        <path class="circular-bar" id="dailyGoalCircle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                    </svg>
+                                    <div class="circular-value-container">
+                                        <span class="circular-value" id="dailyGoalFraction">0/3</span>
+                                    </div>
+                                </div>
+                                <div class="daily-text-meta">
+                                    <span class="percentage" id="dailyGoalPercent">0%</span>
+                                    <span class="subtext">Solved today</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress Charts Grid (NEW) -->
+                    <div class="charts-row-grid">
+                        <div class="card chart-card">
+                            <h3>Weekly Trends</h3>
+                            <div class="chart-canvas-wrapper">
+                                <canvas id="chartWeeklyProgress"></canvas>
+                            </div>
+                        </div>
+                        <div class="card chart-card">
+                            <h3>Topic Breakdown</h3>
+                            <div class="chart-canvas-wrapper">
+                                <canvas id="chartTopicProgress"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Difficulty & platform layout -->
+                    <div class="dashboard-details-grid">
+                        <!-- Difficulty Breakdown -->
+                        <div class="card details-card">
+                            <h3>Difficulty Breakdown</h3>
+                            <div class="difficulty-bars">
+                                <div class="diff-bar-group easy">
+                                    <div class="diff-bar-header">
+                                        <span>Easy</span>
+                                        <span class="count" id="countEasy">0</span>
+                                    </div>
+                                    <div class="diff-bar-track">
+                                        <div class="diff-bar-fill" id="fillEasy" style="width: 0%;"></div>
+                                    </div>
+                                </div>
+                                <div class="diff-bar-group medium">
+                                    <div class="diff-bar-header">
+                                        <span>Medium</span>
+                                        <span class="count" id="countMedium">0</span>
+                                    </div>
+                                    <div class="diff-bar-track">
+                                        <div class="diff-bar-fill" id="fillMedium" style="width: 0%;"></div>
+                                    </div>
+                                </div>
+                                <div class="diff-bar-group hard">
+                                    <div class="diff-bar-header">
+                                        <span>Hard</span>
+                                        <span class="count" id="countHard">0</span>
+                                    </div>
+                                    <div class="diff-bar-track">
+                                        <div class="diff-bar-fill" id="fillHard" style="width: 0%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Top Platforms and Topics -->
+                        <div class="card details-card">
+                            <h3>Performance distribution</h3>
+                            <div class="distribution-tabs">
+                                <button class="dist-tab-btn active" id="btnTabPlatforms">Platforms</button>
+                                <button class="dist-tab-btn" id="btnTabTopics">Topics</button>
+                            </div>
+                            <div class="distribution-list" id="distributionList">
+                                <!-- Populated dynamically -->
+                                <div class="empty-state">No distribution data logged yet.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Calendar Heatmap Card -->
+                    <div class="card heatmap-card">
+                        <div class="heatmap-header">
+                            <div class="header-text">
+                                <h3>Activity Heatmap</h3>
+                                <p>Your consistency visualization map across the past year</p>
+                            </div>
+                            <div class="heatmap-legend">
+                                <span>Less</span>
+                                <span class="legend-cell level-0"></span>
+                                <span class="legend-cell level-1"></span>
+                                <span class="legend-cell level-2"></span>
+                                <span class="legend-cell level-3"></span>
+                                <span class="legend-cell level-4"></span>
+                                <span>More</span>
+                            </div>
+                        </div>
+                        <div class="heatmap-scroll-container">
+                            <div class="heatmap-wrapper" id="heatmapContainer">
+                                <!-- Calendar generated by Javascript -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Heatmap Dedicated -->
+                <section id="section-heatmap" class="tab-content">
+                    <div class="card section-wide-card">
+                        <div class="card-header-flex">
+                            <div>
+                                <h2>Consistency Calendar</h2>
+                                <p>Review detailed logs of days, streak milestones, and daily completions.</p>
+                            </div>
+                        </div>
+                        <div class="heatmap-detailed-view">
+                            <div class="heatmap-wrapper large-heatmap" id="heatmapContainerLarge">
+                                <!-- Generated by JS -->
+                            </div>
+                            <div class="heatmap-analysis-grid">
+                                <div class="analysis-box">
+                                    <h4 id="analysisAvgWeekly">0.0</h4>
+                                    <p>Avg Problems / Week</p>
+                                </div>
+                                <div class="analysis-box">
+                                    <h4 id="analysisActiveDays">0 days</h4>
+                                    <p>Days with submissions</p>
+                                </div>
+                                <div class="analysis-box">
+                                    <h4 id="analysisBestDay">None</h4>
+                                    <p>Most Productive Day</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Custom Plans -->
+                <section id="section-plans" class="tab-content">
+                    <div class="plans-header-row">
+                        <div>
+                            <h2>Customization & Study Plans</h2>
+                            <p>Create focused playlists or track specialized DSA goals.</p>
+                        </div>
+                        <button class="btn btn-secondary" id="btnCreatePlan">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            <span>Create New Plan</span>
+                        </button>
+                    </div>
+
+                    <div class="plans-grid" id="plansContainer">
+                        <!-- Populated dynamically by JS -->
+                    </div>
+                </section>
+
+                <!-- Section: Problems Log -->
+                <section id="section-problems" class="tab-content">
+                    <div class="log-control-card card">
+                        <div class="search-filter-row">
+                            <div class="search-box">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                <input type="text" id="filterSearch" placeholder="Search problems by name, notes...">
+                            </div>
+                            <div class="filters-group">
+                                <button type="button" class="btn" id="btnBulkDelete" style="display: none; border-color: var(--rose); color: var(--rose); background-color: rgba(239, 68, 68, 0.05); padding: 8px 14px; font-size: 0.85rem; height: 38px;">
+                                    Delete Selected (<span id="bulkDeleteCount">0</span>)
+                                </button>
+                                <select id="filterDifficulty">
+                                    <option value="all">All Difficulties</option>
+                                    <option value="Easy">Easy</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="Hard">Hard</option>
+                                </select>
+                                <select id="filterPlatform">
+                                    <option value="all">All Platforms</option>
+                                </select>
+                                <select id="filterTopic">
+                                    <option value="all">All Topics</option>
+                                </select>
+                                <button class="btn-clear-filters" id="btnClearFilters" title="Clear Filters">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Problem Table/Cards Container -->
+                    <div class="problems-table-wrapper card">
+                        <table class="problems-table" id="problemsTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 48px;"><input type="checkbox" id="selectAllProblems" style="cursor: pointer; width: 16px; height: 16px; margin-top: 3px;"></th>
+                                    <th>Problem Name</th>
+                                    <th>Topic</th>
+                                    <th>Difficulty</th>
+                                    <th>Platform</th>
+                                    <th>Date Solved</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="problemsTableBody">
+                                <!-- Populated dynamically by JS -->
+                            </tbody>
+                        </table>
+                        <div class="empty-state" id="problemsEmptyState" style="display: none;">
+                            <div class="empty-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            </div>
+                            <h4>No matching problems found</h4>
+                            <p>Try clearing filters or log a new solved problem to get started.</p>
+                            <button class="btn btn-primary" id="btnLogProblemEmpty">Log New Problem</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Section: Admin Controls (NEW) -->
+                <section id="section-admin" class="tab-content">
+                    <div class="plans-header-row">
+                        <div>
+                            <h2>Admin Control Panel</h2>
+                            <p>Global statistics and user overview lists.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stats-grid" style="margin-bottom: 24px;">
+                        <div class="card stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">Total Users</span>
+                                <div class="stat-icon purple-glow">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="adminTotalUsers">0</div>
+                            <div class="stat-meta">Registered coder accounts</div>
+                        </div>
+
+                        <div class="card stat-card">
+                            <div class="stat-header">
+                                <span class="stat-label">Global Solved Problems</span>
+                                <div class="stat-icon green-glow">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                                </div>
+                            </div>
+                            <div class="stat-value" id="adminTotalProblems">0</div>
+                            <div class="stat-meta">Solved across all active users</div>
+                        </div>
+                    </div>
+
+                    <div class="problems-table-wrapper card">
+                        <table class="problems-table" id="adminUsersTable">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Role</th>
+                                    <th>Registration Date</th>
+                                    <th>Total Solved</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminUsersTableBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL: Log Solved Problem -->
+    <div class="modal-backdrop" id="modalLogProblem">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalLogTitle">Log Solved Problem</h3>
+                <button class="modal-close" id="btnCloseLogModal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <form id="formLogProblem">
+                <input type="hidden" id="editProblemId">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="problemName">Problem Title <span class="required">*</span></label>
+                        <input type="text" id="problemName" placeholder="e.g., Two Sum" required autocomplete="off">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="problemDifficulty">Difficulty <span class="required">*</span></label>
+                            <select id="problemDifficulty" required>
+                                <option value="Easy">Easy</option>
+                                <option value="Medium" selected>Medium</option>
+                                <option value="Hard">Hard</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="problemPlatform">Platform <span class="required">*</span></label>
+                            <input type="text" id="problemPlatform" placeholder="e.g., LeetCode, GFG" required list="platformSuggestions" autocomplete="off">
+                            <datalist id="platformSuggestions">
+                                <option value="LeetCode">
+                                <option value="GeeksForGeeks">
+                                <option value="Codeforces">
+                                <option value="HackerRank">
+                                <option value="CodeChef">
+                                <option value="InterviewBit">
+                            </datalist>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="problemTopic">Topic <span class="required">*</span></label>
+                            <input type="text" id="problemTopic" placeholder="e.g., Array, DP, Graphs" required list="topicSuggestions" autocomplete="off">
+                            <datalist id="topicSuggestions">
+                                <option value="Arrays & Hashing">
+                                <option value="Two Pointers">
+                                <option value="Sliding Window">
+                                <option value="Stack">
+                                <option value="Binary Search">
+                                <option value="Linked List">
+                                <option value="Trees">
+                                <option value="Heap / Priority Queue">
+                                <option value="Backtracking">
+                                <option value="Graphs">
+                                <option value="Advanced Graphs">
+                                <option value="Dynamic Programming">
+                                <option value="Greedy">
+                                <option value="Intervals">
+                                <option value="Math & Geometry">
+                                <option value="Bit Manipulation">
+                            </datalist>
+                        </div>
+                        <div class="form-group">
+                            <label for="problemDate">Date Solved <span class="required">*</span></label>
+                            <input type="date" id="problemDate" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="problemUrl">Problem URL</label>
+                        <input type="url" id="problemUrl" placeholder="https://leetcode.com/problems/..." autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="problemNotes">Solution Strategy & Notes</label>
+                        <textarea id="problemNotes" placeholder="Write down optimal complexity, key algorithms, edge cases, or code snippets..." rows="4"></textarea>
+                    </div>
+                    <div class="form-group" id="planAttachmentGroup">
+                        <label>Add to Study Plan</label>
+                        <div class="checkbox-list-container" id="modalPlansCheckboxList">
+                            <!-- Populated dynamically -->
+                            <span class="small-text-gray">No plans created yet.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btnCancelLogModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btnSaveProblem">Save Problem</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Create Study Plan -->
+    <div class="modal-backdrop" id="modalCreatePlan">
+        <div class="modal modal-md">
+            <div class="modal-header">
+                <h3>Create Study Plan</h3>
+                <button class="modal-close" id="btnClosePlanModal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <form id="formCreatePlan">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="planTitle">Plan Title <span class="required">*</span></label>
+                        <input type="text" id="planTitle" placeholder="e.g., LeetCode 75, Trees Grind" required autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="planDescription">Description</label>
+                        <textarea id="planDescription" placeholder="What are you focusing on in this study plan?" rows="2"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="planTargetCount">Target Problems Count <span class="required">*</span></label>
+                            <input type="number" id="planTargetCount" min="1" value="15" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="planColor">Theme Color</label>
+                            <select id="planColor">
+                                <option value="var(--indigo)">Indigo</option>
+                                <option value="var(--emerald)">Emerald</option>
+                                <option value="var(--amber)">Amber</option>
+                                <option value="var(--rose)">Rose</option>
+                                <option value="var(--sky)">Sky Blue</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btnCancelPlanModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Plan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Settings -->
+    <div class="modal-backdrop" id="modalSettings">
+        <div class="modal modal-md">
+            <div class="modal-header">
+                <h3>Target & Account Settings</h3>
+                <button class="modal-close" id="btnCloseSettingsModal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <form id="formSettings">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="settingsUsername">Username</label>
+                        <input type="text" id="settingsUsername" placeholder="Coder" required autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="settingsDailyTarget">Daily Target (Problems solved / day) <span class="required">*</span></label>
+                        <input type="number" id="settingsDailyTarget" min="1" max="20" value="3" required>
+                    </div>
+                    <hr style="border: 0; border-top: 1px solid var(--border-card); margin: 16px 0 8px 0;">
+                    <div class="form-group">
+                        <label style="color: var(--rose); font-weight: 700;">Danger Zone</label>
+                        <p class="small-text-gray" style="margin-bottom: 8px;">Reset your progress statistics or delete parts of your data.</p>
+                        <div class="form-row">
+                            <select id="resetScope" style="border-color: var(--border-card);">
+                                <option value="problems">Reset Problem Count to 0</option>
+                                <option value="plans">Delete All Study Plans</option>
+                                <option value="all">Reset Entire App Data</option>
+                            </select>
+                            <button type="button" class="btn" id="btnResetProgress" style="background-color: var(--rose); color: white; font-weight: 600;">
+                                Perform Reset
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btnCancelSettingsModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Reset Password (Recovery) -->
+    <div class="modal-backdrop" id="modalResetPassword">
+        <div class="modal modal-md">
+            <div class="modal-header">
+                <h3>Reset Account Password</h3>
+                <button class="modal-close" id="btnCloseResetPasswordModal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <form id="formResetPassword">
+                <div class="modal-body">
+                    <p class="small-text-gray" style="margin-bottom: 12px;">Verify your identity using your registered email address to reset your password.</p>
+                    <div class="form-group">
+                        <label for="resetPasswordUsername">Username <span class="required">*</span></label>
+                        <input type="text" id="resetPasswordUsername" placeholder="Enter account username" required autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="resetPasswordVerification">Registered Email Address <span class="required">*</span></label>
+                        <input type="email" id="resetPasswordVerification" placeholder="Enter registered email" required autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <div style="display: flex; gap: 8px; align-items: flex-end;">
+                            <div style="flex: 1;">
+                                <label for="resetPasswordCode" style="margin-bottom: 6px; display: block;">Verification Code <span class="required">*</span></label>
+                                <input type="text" id="resetPasswordCode" placeholder="Enter 6-digit code" required autocomplete="off" maxlength="6" style="height: 38px;">
+                            </div>
+                            <button type="button" class="btn btn-secondary" id="btnSendResetCode" style="white-space: nowrap; height: 38px; font-size: 0.85rem; padding: 0 16px;">Send Code</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="resetPasswordNew">New Password <span class="required">*</span></label>
+                        <div class="password-input-wrapper" style="position: relative; width: 100%;">
+                            <input type="password" id="resetPasswordNew" placeholder="Enter new password (at least 6 characters)" required autocomplete="off" style="width: 100%; padding-right: 40px;">
+                            <button type="button" class="btn-toggle-password" id="btnToggleResetPassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px;">
+                                <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                <svg class="eye-closed" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                            </button>
+                        </div>
+                        <div class="password-strength-container" id="resetPasswordStrengthWrapper" style="display: none; margin-top: 8px;">
+                            <div class="strength-bar-track" style="height: 5px; background: var(--border-card); border-radius: 3px; overflow: hidden; margin-bottom: 6px;">
+                                <div class="strength-bar-fill" id="resetPasswordStrengthBar" style="width: 0%; height: 100%; transition: width 0.3s ease, background-color 0.3s ease;"></div>
+                            </div>
+                            <div class="strength-label" style="font-size: 0.75rem; color: var(--text-muted); text-align: left;">
+                                Strength: <span id="resetPasswordStrengthText" style="font-weight: 700;">Weak</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="error-msg" id="resetPasswordErrorMsg" style="display: none; color: var(--rose);"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btnCancelResetPasswordModal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Reset Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
