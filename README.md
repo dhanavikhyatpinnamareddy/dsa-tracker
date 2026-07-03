@@ -3,10 +3,11 @@
 
 A responsive, production-ready, and data-driven web application designed to help developers organize their Data Structures and Algorithms (DSA) preparation. It features secure multi-user authentication, email verification code (OTP) dispatch via modern HTTP REST APIs, interactive charts, and contribution activity heatmaps.
 
-# 🌐Live Link :
-** URL ** https://dsa-tracker-0mqt.onrender.com
 ---
 
+## 🌐Live Link :
+* **URl**: https://dsa-tracker-0mqt.onrender.com
+  
 ## 🚀 Key Features
 
 * **Secure Onboarding**: User accounts with password hashing via `bcrypt` and strict registration verification.
