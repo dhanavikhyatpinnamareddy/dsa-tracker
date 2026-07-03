@@ -7,7 +7,10 @@ A responsive, production-ready, and data-driven web application designed to help
 
 ## 🌐Live Link :
 * **URl**: https://dsa-tracker-0mqt.onrender.com
-  
+Demo credentials :
+Username : Alien
+Password : galaxy
+
 ## 🚀 Key Features
 
 * **Secure Onboarding**: User accounts with password hashing via `bcrypt` and strict registration verification.
