@@ -1,6 +1,6 @@
 import os
-import psycopg2
-from psycopg2.extras import DictCursor
+import pymysql
+from pymysql.cursors import DictCursor
 import bcrypt
 import random
 from dotenv import load_dotenv
@@ -21,16 +21,33 @@ def get_db():
     db = getattr(g, '_database', None)
     if db is None:
         db_url = os.environ.get('DATABASE_URL')
-        if db_url:
-            db = g._database = psycopg2.connect(db_url, cursor_factory=DictCursor)
+        if db_url and db_url.startswith('mysql'):
+            import re
+            m = re.match(r'mysql(?:\+pymysql)?://([^:]+):([^@]+)@([^:/]+)(?::(\d+))?/([^?]+)', db_url)
+            if m:
+                host = m.group(3)
+                # Enable SSL for remote cloud databases like Aiven
+                ssl_params = {}
+                if host not in ['localhost', '127.0.0.1']:
+                    ssl_params = {'ssl': {}}
+                
+                db = g._database = pymysql.connect(
+                    user=m.group(1),
+                    password=m.group(2),
+                    host=host,
+                    port=int(m.group(4)) if m.group(4) else 3306,
+                    database=m.group(5).split('?')[0],
+                    cursorclass=DictCursor,
+                    **ssl_params
+                )
         else:
-            db = g._database = psycopg2.connect(
+            db = g._database = pymysql.connect(
                 host=os.environ.get('DB_HOST', 'localhost'),
-                port=os.environ.get('DB_PORT', '5432'),
-                user=os.environ.get('DB_USER', 'postgres'),
+                port=int(os.environ.get('DB_PORT', '3306')),
+                user=os.environ.get('DB_USER', 'root'),
                 password=os.environ.get('DB_PASSWORD', ''),
-                database=os.environ.get('DB_NAME', 'postgres'),
-                cursor_factory=DictCursor
+                database=os.environ.get('DB_NAME', 'dsa_tracker'),
+                cursorclass=DictCursor
             )
     return db
 
@@ -49,7 +66,7 @@ def init_db():
             # Create users table
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS users (
-                    id SERIAL PRIMARY KEY,
+                    id INT AUTO_INCREMENT PRIMARY KEY,
                     username VARCHAR(255) UNIQUE NOT NULL,
                     password_hash VARCHAR(255) NOT NULL,
                     is_admin INTEGER DEFAULT 0,
@@ -60,9 +77,18 @@ def init_db():
                 )
             ''')
             
-            # Add email and phone columns dynamically if they do not exist
-            cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255)")
-            cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(50)")
+            # Add email and phone columns dynamically if they do not exist (for existing tables)
+            try:
+                cursor.execute("ALTER TABLE users ADD COLUMN email VARCHAR(255)")
+            except pymysql.err.OperationalError as e:
+                if e.args[0] != 1060: # 1060 = duplicate column name
+                    raise e
+                    
+            try:
+                cursor.execute("ALTER TABLE users ADD COLUMN phone VARCHAR(50)")
+            except pymysql.err.OperationalError as e:
+                if e.args[0] != 1060: # 1060 = duplicate column name
+                    raise e
             
             # Create problems table
             cursor.execute('''
@@ -107,7 +133,7 @@ def init_db():
             # Create verification_codes table
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS verification_codes (
-                    id SERIAL PRIMARY KEY,
+                    id INT AUTO_INCREMENT PRIMARY KEY,
                     target VARCHAR(255) NOT NULL,
                     code VARCHAR(50) NOT NULL,
                     purpose VARCHAR(50) NOT NULL,
@@ -347,7 +373,7 @@ def signup():
             'message': 'Signup successful',
             'user': {'username': user['username'], 'is_admin': bool(user['is_admin'])}
         }), 201
-    except psycopg2.IntegrityError:
+    except pymysql.err.IntegrityError:
         return jsonify({'error': 'Username is already taken.'}), 400
 
 @app.route('/api/auth/login', methods=['POST'])
@@ -467,7 +493,7 @@ def save_settings():
         db.commit()
         session['username'] = username
         return jsonify({'message': 'Settings updated successfully'})
-    except psycopg2.IntegrityError:
+    except pymysql.err.IntegrityError:
         return jsonify({'error': 'Username is already taken.'}), 400
 
 # -------------------------------------------------------------
