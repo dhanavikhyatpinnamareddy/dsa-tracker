@@ -17,38 +17,30 @@ CORS(app, supports_credentials=True)
 # -------------------------------------------------------------
 # Database Utility & Setup
 # -------------------------------------------------------------
+from urllib.parse import urlparse
+import pymysql
+from pymysql.cursors import DictCursor
+
 def get_db():
-    db = getattr(g, '_database', None)
+    db = getattr(g, "_database", None)
+
     if db is None:
-        db_url = os.environ.get('DATABASE_URL')
-        if db_url and db_url.startswith('mysql'):
-            import re
-            m = re.match(r'mysql(?:\+pymysql)?://([^:]+):([^@]+)@([^:/]+)(?::(\d+))?/([^?]+)', db_url)
-            if m:
-                host = m.group(3)
-                # Enable SSL for remote cloud databases like Aiven
-                ssl_params = {}
-                if host not in ['localhost', '127.0.0.1']:
-                    ssl_params = {'ssl': {}}
-                
-                db = g._database = pymysql.connect(
-                    user=m.group(1),
-                    password=m.group(2),
-                    host=host,
-                    port=int(m.group(4)) if m.group(4) else 3306,
-                    database=m.group(5).split('?')[0],
-                    cursorclass=DictCursor,
-                    **ssl_params
-                )
-        else:
-            db = g._database = pymysql.connect(
-                host=os.environ.get('DB_HOST', 'localhost'),
-                port=int(os.environ.get('DB_PORT', '3306')),
-                user=os.environ.get('DB_USER', 'root'),
-                password=os.environ.get('DB_PASSWORD', ''),
-                database=os.environ.get('DB_NAME', 'dsa_tracker'),
-                cursorclass=DictCursor
-            )
+        db_url = os.environ["DATABASE_URL"]
+
+        parsed = urlparse(db_url)
+
+        db = g._database = pymysql.connect(
+            host=parsed.hostname,
+            port=parsed.port,
+            user=parsed.username,
+            password=parsed.password,
+            database=parsed.path.lstrip("/"),
+            cursorclass=DictCursor,
+            ssl={"ssl_mode": "REQUIRED"},
+            autocommit=True,
+            connect_timeout=15
+        )
+
     return db
 
 @app.teardown_appcontext
