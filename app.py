@@ -168,11 +168,36 @@ def send_otp_message(target, code, purpose):
     resend_api_key = os.environ.get('RESEND_API_KEY')
     sendgrid_api_key = os.environ.get('SENDGRID_API_KEY')
     mailgun_api_key = os.environ.get('MAILGUN_API_KEY')
+    brevo_api_key = os.environ.get('BREVO_API_KEY')
     
     import requests
     
-    # 1. Try Resend HTTP API
-    if resend_api_key:
+    # 1. Try Brevo HTTP API
+    if brevo_api_key:
+        from_email = os.environ.get('BREVO_FROM_EMAIL', 'no-reply@dsa-tracker.com')
+        try:
+            headers = {
+                "api-key": brevo_api_key,
+                "Content-Type": "application/json",
+                "accept": "application/json"
+            }
+            payload = {
+                "sender": {"name": "DSA Progress Tracker", "email": from_email},
+                "to": [{"email": target}],
+                "subject": subject,
+                "textContent": body
+            }
+            response = requests.post("https://api.brevo.com/v3/smtp/email", json=payload, headers=headers)
+            if response.status_code in (200, 201, 202):
+                print(f"[Brevo Success] Sent OTP '{code}' to '{target}' for '{purpose}'", flush=True)
+                return True
+            else:
+                print(f"[Brevo Error] API returned status {response.status_code}: {response.text}", flush=True)
+        except Exception as e:
+            print(f"[Brevo Exception] Failed to send email: {str(e)}", flush=True)
+            
+    # 2. Try Resend HTTP API
+    elif resend_api_key:
         from_email = os.environ.get('RESEND_FROM_EMAIL', 'onboarding@resend.dev')
         try:
             headers = {
@@ -194,7 +219,7 @@ def send_otp_message(target, code, purpose):
         except Exception as e:
             print(f"[Resend Exception] Failed to send email: {str(e)}", flush=True)
             
-    # 2. Try SendGrid HTTP API
+    # 3. Try SendGrid HTTP API
     elif sendgrid_api_key:
         from_email = os.environ.get('SENDGRID_FROM_EMAIL', 'no-reply@dsa-tracker.com')
         try:
@@ -217,7 +242,7 @@ def send_otp_message(target, code, purpose):
         except Exception as e:
             print(f"[SendGrid Exception] Failed to send email: {str(e)}", flush=True)
             
-    # 3. Try Mailgun HTTP API
+    # 4. Try Mailgun HTTP API
     elif mailgun_api_key:
         domain = os.environ.get('MAILGUN_DOMAIN')
         from_email = os.environ.get('MAILGUN_FROM_EMAIL', f"no-reply@{domain}" if domain else "no-reply@dsa-tracker.com")
@@ -239,7 +264,7 @@ def send_otp_message(target, code, purpose):
             print("[Mailgun Warning] MAILGUN_DOMAIN env variable is missing.", flush=True)
             
     else:
-        print("[Email Warning] No email API provider keys (RESEND_API_KEY, SENDGRID_API_KEY, MAILGUN_API_KEY) configured. Falling back to console.", flush=True)
+        print("[Email Warning] No email API provider keys (BREVO_API_KEY, RESEND_API_KEY, SENDGRID_API_KEY, MAILGUN_API_KEY) configured. Falling back to console.", flush=True)
             
     # Fallback console log for local development
     print(f"\n[VERIFICATION CODE FALLBACK] Sent code '{code}' to '{target}' for '{purpose}'\n", flush=True)
