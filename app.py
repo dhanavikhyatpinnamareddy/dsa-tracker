@@ -585,12 +585,38 @@ def save_problem():
             WHERE id = %s AND user_id = %s
         ''', (name, difficulty, platform, topic, date, url, notes, pid, user['id']))
     else:
-        # Create new
-        pid = f"prob-{int(bcrypt.gensalt()[4:12].hex(), 16)}" # Generate secure key
-        cursor.execute('''
-            INSERT INTO problems (id, user_id, name, difficulty, platform, topic, date, url, notes)
+    # Check if the same problem already exists
+        cursor.execute("""
+            SELECT id
+            FROM problems
+            WHERE user_id = %s
+            AND name = %s
+            AND platform = %s
+        """, (user['id'], name, platform))
+
+        if cursor.fetchone():
+            return jsonify({
+                "error": "This problem is already logged."
+            }), 409
+
+        # Create new problem
+        pid = f"prob-{int(bcrypt.gensalt()[4:12].hex(), 16)}"
+
+        cursor.execute("""
+            INSERT INTO problems
+            (id, user_id, name, difficulty, platform, topic, date, url, notes)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ''', (pid, user['id'], name, difficulty, platform, topic, date, url, notes))
+        """, (
+            pid,
+            user['id'],
+            name,
+            difficulty,
+            platform,
+            topic,
+            date,
+            url,
+            notes
+        ))
         
     # Sync plans mappings: delete old mappings for this problem
     cursor.execute("DELETE FROM problem_plans WHERE problem_id = %s", (pid,))
