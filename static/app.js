@@ -1440,6 +1440,9 @@ function setupEventListeners() {
 
     // Log Problem Form Submit
     elFormLogProblem.addEventListener("submit", async (e) => {
+        const saveBtn = document.querySelector("#formLogProblem button[type='submit']");
+        saveBtn.disabled = true;
+        saveBtn.textContent = "Saving...";
         e.preventDefault();
         const pid = elEditProblemId.value || null;
         const name = elProblemName.value.trim();
@@ -1455,17 +1458,34 @@ function setupEventListeners() {
         checkboxes.forEach(cb => checkedPlans.push(cb.value));
 
         try {
-            await apiRequest('/api/problems', {
-                method: 'POST',
-                body: JSON.stringify({
-                    id: pid, name, difficulty, platform, topic, date, url, notes, plans: checkedPlans
-                })
-            });
-            closeModal(elModalLogProblem);
-            await fetchAllUserData();
-        } catch (err) {
-            alert(err.message);
-        }
+    await apiRequest('/api/problems', {
+        method: 'POST',
+        body: JSON.stringify({
+            id: pid,
+            name,
+            difficulty,
+            platform,
+            topic,
+            date,
+            url,
+            notes,
+            plans: checkedPlans
+        })
+    });
+
+    closeModal(elModalLogProblem);
+    await fetchAllUserData();
+
+} catch (err) {
+
+    alert(err.message);
+
+} finally {
+
+    saveBtn.disabled = false;
+    saveBtn.textContent = "Save Problem";
+
+}
     });
 
     // Create Study Plan triggers
