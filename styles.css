@@ -1945,7 +1945,7 @@ hr {
     line-height: 1.5;
 }
 
-html { scroll-behavior: smooth; font-size: 110%; }
+html { scroll-behavior: smooth; font-size: 90%; }
 
 .landing-image img {
     max-width: 100%;
